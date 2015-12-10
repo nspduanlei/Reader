@@ -10,7 +10,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
 
-import com.example.testscroll.model.Page;
+import com.example.testscroll.model.MyPage;
 import com.example.testscroll.utils.CharsetDetector;
 import com.example.testscroll.view.FlipperLayout;
 import com.example.testscroll.view.FlipperLayout.TouchListener;
@@ -37,7 +37,7 @@ public class MainActivity extends Activity implements OnClickListener, TouchList
     private int currentShowEndIndex = 0;
     private int currentBottomEndIndex = 0;
 
-    ArrayList<Page> pages = new ArrayList<>();
+    ArrayList<MyPage> pages = new ArrayList<>();
 
     private static final int MSG_DRAW_TEXT = 1;
 
@@ -100,7 +100,7 @@ public class MainActivity extends Activity implements OnClickListener, TouchList
                         public void onLayout(int charNum) {
 
                             if (pages.size() == 0) {
-                                pages.add(new Page(pageIndex, charNum));
+                                pages.add(new MyPage(pageIndex, charNum));
 
                                 currentShowEndIndex = charNum;
                                 buffer.position(currentShowEndIndex);
@@ -112,7 +112,7 @@ public class MainActivity extends Activity implements OnClickListener, TouchList
 
                                             currentBottomEndIndex = charNum;
 
-                                            pages.add(new Page(pageIndex + 1, charNum));
+                                            pages.add(new MyPage(pageIndex + 1, charNum));
                                         }
                                     }
                                 });
@@ -198,7 +198,7 @@ public class MainActivity extends Activity implements OnClickListener, TouchList
                 @Override
                 public void onLayout(int charNum) {
                     if (pages.size() == pageIndex) {
-                        pages.add(new Page(pageIndex, charNum));
+                        pages.add(new MyPage(pageIndex, charNum));
                         currentBottomEndIndex = currentBottomEndIndex + charNum;
 
                         Log.d("test003", "currentTopEndIndex=" + currentTopEndIndex +
