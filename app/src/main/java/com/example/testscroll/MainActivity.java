@@ -10,6 +10,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
 
+import com.example.testscroll.model.Page;
 import com.example.testscroll.utils.CharsetDetector;
 import com.example.testscroll.view.FlipperLayout;
 import com.example.testscroll.view.FlipperLayout.TouchListener;
@@ -22,6 +23,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
 
 public class MainActivity extends Activity implements OnClickListener, TouchListener {
 
@@ -35,17 +37,21 @@ public class MainActivity extends Activity implements OnClickListener, TouchList
     private int currentShowEndIndex = 0;
     private int currentBottomEndIndex = 0;
 
+    ArrayList<Page> pages = new ArrayList<>();
+
     private static final int MSG_DRAW_TEXT = 1;
 
     //ReadView curReadView;
 
     CharBuffer buffer = CharBuffer.allocate(8000);
 
-    int position = 0;
+    //int position = 0;
 
     //ReadView nextReadView;
 
     //ReadView preReadView;
+
+    int pageIndex = 0;
 
     private Handler mHandler = new Handler() {
         @Override
@@ -92,20 +98,28 @@ public class MainActivity extends Activity implements OnClickListener, TouchList
                     readView1.setLayoutListener(new ReadView.LayoutListener() {
                         @Override
                         public void onLayout(int charNum) {
-                            currentShowEndIndex = charNum;
-                            buffer.position(currentShowEndIndex);
-                            readView2.setText(buffer);
-                            readView2.setLayoutListener(new ReadView.LayoutListener() {
-                                @Override
-                                public void onLayout(int charNum) {
-                                    currentBottomEndIndex = charNum;
-                                }
-                            });
+
+                            if (pages.size() == 0) {
+                                pages.add(new Page(pageIndex, charNum));
+
+                                currentShowEndIndex = charNum;
+                                buffer.position(currentShowEndIndex);
+                                readView2.setText(buffer);
+                                readView2.setLayoutListener(new ReadView.LayoutListener() {
+                                    @Override
+                                    public void onLayout(int charNum) {
+                                        if (pages.size() == 1) {
+
+                                            currentBottomEndIndex = charNum;
+
+                                            pages.add(new Page(pageIndex + 1, charNum));
+                                        }
+                                    }
+                                });
+                            }
+
                         }
                     });
-
-
-
 
 
 //                    ViewTreeObserver vto1 = readView1.getViewTreeObserver();
@@ -165,9 +179,10 @@ public class MainActivity extends Activity implements OnClickListener, TouchList
 
         //ReadView curReadView = (ReadView) curView.findViewById(R.id.textview);
 
-
         View newView = null;
         if (direction == TouchListener.MOVE_TO_LEFT) { //下一页
+
+            pageIndex++;
 
             currentTopEndIndex = currentShowEndIndex;
             currentShowEndIndex = currentBottomEndIndex;
@@ -182,17 +197,35 @@ public class MainActivity extends Activity implements OnClickListener, TouchList
             readView.setLayoutListener(new ReadView.LayoutListener() {
                 @Override
                 public void onLayout(int charNum) {
-                    currentBottomEndIndex = currentBottomEndIndex + charNum;
+                    if (pages.size() == pageIndex) {
+                        pages.add(new Page(pageIndex, charNum));
+                        currentBottomEndIndex = currentBottomEndIndex + charNum;
 
-                    Log.d("test002", "currentTopEndIndex=" + currentTopEndIndex +
-                            ", currentShowEndIndex" + currentShowEndIndex + ", currentBottomEndIndex=" + currentBottomEndIndex + ", charNum=" + charNum);
+                        Log.d("test003", "currentTopEndIndex=" + currentTopEndIndex +
+                                ", currentShowEndIndex=" + currentShowEndIndex
+                                + ", currentBottomEndIndex= " + currentBottomEndIndex);
+                    }
                 }
             });
 
 
         } else {  //上一页
+
+            pageIndex --;
+
+            Log.d("test003", "pageIndex=" + pageIndex);
+
+            for(int i = 0; i < pages.size() ; i ++) {
+                Log.d("test003", pages.get(i).toString());
+            }
+
             currentBottomEndIndex = currentShowEndIndex;
             currentShowEndIndex = currentTopEndIndex;
+            currentTopEndIndex = currentTopEndIndex - pages.get(pageIndex - 1).getPageSize();
+
+            Log.d("test003", "currentTopEndIndex=" + currentTopEndIndex +
+                    ", currentShowEndIndex=" + currentShowEndIndex
+                    + ", currentBottomEndIndex= " + currentBottomEndIndex);
 
             newView = LayoutInflater.from(this).inflate(R.layout.view_new, null);
             ReadView readView = (ReadView) newView.findViewById(R.id.textview);
@@ -200,16 +233,6 @@ public class MainActivity extends Activity implements OnClickListener, TouchList
             buffer.position(currentTopEndIndex);
             readView.setText(buffer);
 
-
-            readView.setLayoutListener(new ReadView.LayoutListener() {
-                @Override
-                public void onLayout(int charNum) {
-                    currentTopEndIndex = currentTopEndIndex - charNum;
-
-                    Log.d("test002", "currentTopEndIndex=" + currentTopEndIndex +
-                            ", currentShowEndIndex=" + currentShowEndIndex + ", currentBottomEndIndex=" + currentBottomEndIndex + ", charNum=" + charNum);
-                }
-            });
         }
 
         return newView;
@@ -255,7 +278,7 @@ public class MainActivity extends Activity implements OnClickListener, TouchList
 //			}
 //		}
 
-        boolean should = position < textLength;
+        boolean should = true;
 
         return should;
     }
