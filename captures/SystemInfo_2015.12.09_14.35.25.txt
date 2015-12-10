@@ -1,0 +1,50 @@
+TASK com.example.testscrollactivity id=2926
+  ACTIVITY com.example.testscrollactivity/com.example.testscroll.MainActivity 290a55bc pid=19812
+    Local Activity 1595b6a3 State:
+      mResumed=true mStopped=false mFinished=false
+      mLoadersStarted=true
+      mChangingConfigurations=false
+      mCurrentConfig={1.0 460mcc2mnc zh_CN ldltr sw360dp w360dp h567dp 320dpi nrml port finger -keyb/v/h -nav/h s.6?spn}
+    FragmentManager misc state:
+      mActivity=com.example.testscroll.MainActivity@1595b6a3
+      mContainer=android.app.Activity$1@33769da0
+      mCurState=5 mStateSaved=false mDestroyed=false
+    ViewRoot:
+      mAdded=true mRemoved=false
+      mConsumeBatchedInputScheduled=false
+      mConsumeBatchedInputImmediatelyScheduled=false
+      mPendingInputEventCount=0
+      mProcessInputEventsScheduled=false
+      mTraversalScheduled=false
+      android.view.ViewRootImpl$NativePreImeInputStage: mQueueLength=0
+      android.view.ViewRootImpl$ImeInputStage: mQueueLength=0
+      android.view.ViewRootImpl$NativePostImeInputStage: mQueueLength=0
+    Choreographer:
+      mFrameScheduled=false
+      mLastFrameTime=166426425 (3187 ms ago)
+    View Hierarchy:
+      com.android.internal.policy.impl.PhoneWindow$DecorView{17480d59 V.E..... R.....I. 0,0-720,1184}
+        com.android.internal.widget.ActionBarOverlayLayout{994fd1e V.ED.... ......I. 0,0-720,1184 #1020375 android:id/decor_content_parent}
+          android.widget.FrameLayout{1cc319ff V.E..... ......I. 0,146-720,1184 #1020002 android:id/content}
+            com.example.testscroll.view.FlipperLayout{b37f3cc V.E..... ......I. 0,0-720,1038 #7f080000 app:id/container}
+              android.widget.LinearLayout{2ee32615 V.E..... ........ 0,0-720,1038}
+                android.widget.TextView{358fcd2a V.ED.... ........ 0,0-710,1038 #7f080001 app:id/textview}
+                android.view.View{3739571b V.ED.... ........ 710,0-720,1038}
+              android.widget.LinearLayout{35d680b8 V.E..... ........ 0,0-720,1038}
+                android.widget.TextView{ddd0e91 V.ED.... ........ 0,0-710,1038 #7f080001 app:id/textview}
+                android.view.View{16b591f6 V.ED.... ........ 710,0-720,1038}
+              android.view.View{180c49f7 G.ED.... ......I. 0,0-720,1038}
+          com.android.internal.widget.ActionBarContainer{27cef064 V.ED.... ........ 0,50-720,146 #1020376 android:id/action_bar_container}
+            com.android.internal.widget.ActionBarView{11b302cd V.E..... ........ 0,0-720,96 #1020377 android:id/action_bar}
+              android.widget.LinearLayout{ba0d782 V.....C. ........ 17,0-391,96}
+                com.android.internal.widget.ActionBarView$HomeView{25b18e93 V.E..... ........ 0,0-80,96}
+                  android.widget.ImageView{3ebcaed0 G.ED.... ......I. 0,0-0,0 #102003b android:id/up}
+                  android.widget.ImageView{3879fec9 V.ED.... ........ 8,16-72,80 #102002c android:id/home}
+                android.widget.LinearLayout{1008e9ce V.E..... ........ 80,23-374,72}
+                  android.widget.TextView{2e5c80ef V.ED.... ........ 0,0-278,49 #10202b6 android:id/action_bar_title}
+                  android.widget.TextView{1485e7fc G.ED.... ......I. 0,0-0,0 #10202b7 android:id/action_bar_subtitle}
+              android.widget.ActionMenuView{329abe85 V.ED.... ......ID 720,0-720,96}
+            com.android.internal.widget.ActionBarContextView{11cdd4da G.E..... ......ID 0,0-0,0 #1020378 android:id/action_context_bar}
+          com.android.internal.widget.ActionBarContainer{61a3d0b G.ED.... ......ID 0,0-0,0 #1020379 android:id/split_action_bar}
+    Looper (main, tid 1) {194787e8}
+      (Total messages: 0, idling=false, quitting=false)
