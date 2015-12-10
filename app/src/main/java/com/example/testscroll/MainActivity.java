@@ -109,10 +109,9 @@ public class MainActivity extends Activity implements OnClickListener, TouchList
                                     @Override
                                     public void onLayout(int charNum) {
                                         if (pages.size() == 1) {
-
                                             currentBottomEndIndex = charNum;
-
                                             pages.add(new MyPage(pageIndex + 1, charNum));
+                                            pageIndex ++;
                                         }
                                     }
                                 });
