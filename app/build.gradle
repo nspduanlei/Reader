@@ -24,4 +24,5 @@ dependencies {
     compile files('lib/antlr-2.7.4.jar')
     compile files('lib/chardet-1.0.jar')
     compile files('lib/jargs-1.0.jar')
+    compile files('lib/litepal-1.3.0-src.jar')
 }

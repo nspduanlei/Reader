@@ -9,13 +9,15 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.view.ViewTreeObserver;
 
 import com.example.testscroll.model.MyPage;
 import com.example.testscroll.utils.CharsetDetector;
 import com.example.testscroll.view.FlipperLayout;
 import com.example.testscroll.view.FlipperLayout.TouchListener;
 import com.example.testscroll.view.ReadView;
-import com.example.testscrollactivity.R;
+
+import org.litepal.crud.DataSupport;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -23,7 +25,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
 
 public class MainActivity extends Activity implements OnClickListener, TouchListener {
 
@@ -33,11 +34,9 @@ public class MainActivity extends Activity implements OnClickListener, TouchList
 
     private static final int COUNT = 1000;
 
-    private int currentTopEndIndex = 0;
-    private int currentShowEndIndex = 0;
-    private int currentBottomEndIndex = 0;
-
-    ArrayList<MyPage> pages = new ArrayList<>();
+//    private int currentTopEndIndex = 0;
+//    private int currentShowEndIndex = 0;
+//    private int currentBottomEndIndex = 0;
 
     private static final int MSG_DRAW_TEXT = 1;
 
@@ -51,7 +50,9 @@ public class MainActivity extends Activity implements OnClickListener, TouchList
 
     //ReadView preReadView;
 
-    int pageIndex = 0;
+    int pageIndex = 1;
+
+    boolean oneIsLayout, twoIsLayout;
 
     private Handler mHandler = new Handler() {
         @Override
@@ -67,96 +68,98 @@ public class MainActivity extends Activity implements OnClickListener, TouchList
 
                     rootLayout.initFlipperViews(MainActivity.this, view2, view1, recoverView);
 
-                    //textLength = text.length();
-
                     final ReadView readView1 = (ReadView) view1.findViewById(R.id.textview);
                     final ReadView readView2 = (ReadView) view2.findViewById(R.id.textview);
 
-//					if (textLength > COUNT) {
-//						textView.setText(text.subSequence(0, COUNT));
-//
-//						textView = (ReadView) view2.findViewById(R.id.textview);
-//						if (textLength > (COUNT << 1)) {
-//
-//							textView.setText(text.subSequence(COUNT, COUNT << 1));
-//
-//							currentShowEndIndex = COUNT;
-//							currentBottomEndIndex = COUNT << 1;
-//						} else {
-//							textView.setText(text.subSequence(COUNT, textLength));
-//							currentShowEndIndex = textLength;
-//							currentBottomEndIndex = textLength;
-//						}
-//					} else {
-//						textView.setText(text.subSequence(0, textLength));
-//						currentShowEndIndex = textLength;
-//						currentBottomEndIndex = textLength;
-//					}
-
                     buffer.position(0);
+//                    readView1.setText(buffer, new MyPage(1), new ReadView.LayoutListener() {
+//                        @Override
+//                        public void onLayout(int charNum) { //第一页的view加载完成, 可以获取到第二页的开始位置
+//
+//                            buffer.position(charNum);
+//                            readView2.setText(buffer, new MyPage(2));
+//                        }
+//                    });
+
+                    //填充第一页的文本
                     readView1.setText(buffer);
-                    readView1.setLayoutListener(new ReadView.LayoutListener() {
+
+                    //填充第二页的文本
+                    ViewTreeObserver vto1 = readView1.getViewTreeObserver();
+                    vto1.addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
                         @Override
-                        public void onLayout(int charNum) {
+                        public void onGlobalLayout() {
+                            if (oneIsLayout)
+                                return;
 
-                            if (pages.size() == 0) {
-                                pages.add(new MyPage(pageIndex, charNum));
+                            int charNum = readView1.getCharNum();
 
-                                currentShowEndIndex = charNum;
-                                buffer.position(currentShowEndIndex);
-                                readView2.setText(buffer);
-                                readView2.setLayoutListener(new ReadView.LayoutListener() {
-                                    @Override
-                                    public void onLayout(int charNum) {
-                                        if (pages.size() == 1) {
-                                            currentBottomEndIndex = charNum;
-                                            pages.add(new MyPage(pageIndex + 1, charNum));
-                                            pageIndex ++;
-                                        }
-                                    }
-                                });
+
+                            MyPage page = new MyPage();
+                            page.setPageSize(charNum);
+                            page.setStartPosition(charNum);
+
+                            //将第一页的数据存储在数据库中，如果该数据不存在
+                            if (isSavePage(1)) {
+                                page.update(1);
+                            } else {
+                                page.save();
                             }
 
+                            buffer.position(charNum);
+                            readView2.setText(buffer);
+                            oneIsLayout = true;
                         }
                     });
 
 
-//                    ViewTreeObserver vto1 = readView1.getViewTreeObserver();
-//                    vto1.addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
-//                        @Override
-//                        public void onGlobalLayout() {
-//                            if (currentShowEndIndex > 0) {
-//                                return;
-//                            }
-//
-//                            currentShowEndIndex = readView1.getCharNum();
-//
-//                            position = readView1.getCharNum();
-//                            buffer.position(position);
-//
-//                            readView2.setText(buffer);
-//                            nextReadView = readView2;
-//
-//                            ViewTreeObserver vto2 = readView2.getViewTreeObserver();
-//                            vto2.addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
-//                                @Override
-//                                public void onGlobalLayout() {
-//                                    if (currentBottomEndIndex > 0) {
-//                                        return;
-//                                    }
-//                                    currentBottomEndIndex = readView2.getCharNum();
-//                                }
-//                            });
-//                        }
-//                    });
 
-//					currentShowEndIndex = textLength;
-//					currentBottomEndIndex = textLength;
+                    ViewTreeObserver vto2 = readView2.getViewTreeObserver();
+                    vto2.addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+                        @Override
+                        public void onGlobalLayout() {
+                            if (twoIsLayout)
+                                return;
+
+                            int charNum = readView2.getCharNum();
+
+                            //将第二页的数据存储在数据库中, 如果该数据不存在
+                            MyPage page = new MyPage();
+                            page.setPageSize(charNum);
+                            page.setStartPosition(charNum + getStartPosition(1));
+
+                            if (isSavePage(2)) {
+                                page.update(2);
+                            } else {
+                                page.save();
+                            }
+
+                            twoIsLayout = true;
+                        }
+                    });
+
 
                     break;
             }
         }
     };
+
+
+
+    //该页是否存储
+    private boolean isSavePage(int pageNo) {
+        return DataSupport.find(MyPage.class, pageNo) != null;
+    }
+
+    //获取该页的结束位置
+    private int getStartPosition(int pageNo) {
+        if (isSavePage(pageNo)) {
+            return DataSupport.find(MyPage.class, pageNo).getStartPosition();
+        }
+        return 0;
+    }
+
+
 
 
     @Override
@@ -174,65 +177,48 @@ public class MainActivity extends Activity implements OnClickListener, TouchList
 
     @Override
     public View createView(final int direction, View curView) {
-        //String txt;
 
-        //ReadView curReadView = (ReadView) curView.findViewById(R.id.textview);
-
-        View newView = null;
+        View newView;
         if (direction == TouchListener.MOVE_TO_LEFT) { //下一页
 
-            pageIndex++;
+            pageIndex ++;
 
-            currentTopEndIndex = currentShowEndIndex;
-            currentShowEndIndex = currentBottomEndIndex;
+            buffer.position(getStartPosition(pageIndex));
 
             newView = LayoutInflater.from(this).inflate(R.layout.view_new, null);
-            ReadView readView = (ReadView) newView.findViewById(R.id.textview);
-
-            buffer.position(currentBottomEndIndex);
+            final ReadView readView = (ReadView) newView.findViewById(R.id.textview);
             readView.setText(buffer);
 
-
-            readView.setLayoutListener(new ReadView.LayoutListener() {
+            ViewTreeObserver vto2 = readView.getViewTreeObserver();
+            vto2.addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
                 @Override
-                public void onLayout(int charNum) {
-                    if (pages.size() == pageIndex) {
-                        pages.add(new MyPage(pageIndex, charNum));
-                        currentBottomEndIndex = currentBottomEndIndex + charNum;
+                public void onGlobalLayout() {
+                    int charNm = readView.getCharNum();
 
-                        Log.d("test003", "currentTopEndIndex=" + currentTopEndIndex +
-                                ", currentShowEndIndex=" + currentShowEndIndex
-                                + ", currentBottomEndIndex= " + currentBottomEndIndex);
+                    MyPage page = new MyPage();
+                    page.setPageSize(charNm);
+                    page.setStartPosition(getStartPosition(pageIndex) + charNm);
+                    page.setBookId(pageIndex + 1);
+
+                    if (isSavePage(pageIndex + 1)) {
+                        page.update(pageIndex + 1);
+                    } else {
+                        page.save();
                     }
                 }
             });
-
-
         } else {  //上一页
-
             pageIndex --;
-
-            Log.d("test003", "pageIndex=" + pageIndex);
-
-            for(int i = 0; i < pages.size() ; i ++) {
-                Log.d("test003", pages.get(i).toString());
-            }
-
-            currentBottomEndIndex = currentShowEndIndex;
-            currentShowEndIndex = currentTopEndIndex;
-            currentTopEndIndex = currentTopEndIndex - pages.get(pageIndex - 1).getPageSize();
-
-            Log.d("test003", "currentTopEndIndex=" + currentTopEndIndex +
-                    ", currentShowEndIndex=" + currentShowEndIndex
-                    + ", currentBottomEndIndex= " + currentBottomEndIndex);
+            buffer.position(getStartPosition(pageIndex-1));
 
             newView = LayoutInflater.from(this).inflate(R.layout.view_new, null);
             ReadView readView = (ReadView) newView.findViewById(R.id.textview);
-
-            buffer.position(currentTopEndIndex);
             readView.setText(buffer);
-
         }
+
+
+
+        Log.d("test0001", "page=" + pageIndex);
 
         return newView;
     }
@@ -240,7 +226,7 @@ public class MainActivity extends Activity implements OnClickListener, TouchList
     @Override
     public boolean whetherHasPreviousPage() {
         //return currentShowEndIndex > COUNT;
-        return currentTopEndIndex > 0;
+        return true;
     }
 
     @Override

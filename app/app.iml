@@ -84,6 +84,7 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" exported="" name="antlr-2.7.4" level="project" />
     <orderEntry type="library" exported="" name="cpdetector_1.0.10" level="project" />
+    <orderEntry type="library" exported="" name="litepal-1.3.0-src" level="project" />
     <orderEntry type="library" exported="" name="jargs-1.0" level="project" />
     <orderEntry type="library" exported="" name="support-v4-23.0.1" level="project" />
     <orderEntry type="library" exported="" name="chardet-1.0" level="project" />

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<litepal>
+    <dbname value="demo"/> <!--用于设定数据库名字-->
+
+    <version value="2"/><!--用于设定数据库的版本-->
+
+    <list> <!--用于设定数据库的映射关系-->
+        <mapping class="com.example.testscroll.model.MyPage"/>
+    </list>
+</litepal>
