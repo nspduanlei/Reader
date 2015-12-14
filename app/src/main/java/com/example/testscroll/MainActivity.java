@@ -5,7 +5,6 @@ import android.content.res.AssetManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -28,31 +27,9 @@ import java.nio.charset.Charset;
 
 public class MainActivity extends Activity implements OnClickListener, TouchListener {
 
-    private String text = "";
-
-    private int textLength = 8000;
-
-    private static final int COUNT = 1000;
-
-//    private int currentTopEndIndex = 0;
-//    private int currentShowEndIndex = 0;
-//    private int currentBottomEndIndex = 0;
-
     private static final int MSG_DRAW_TEXT = 1;
-
-    //ReadView curReadView;
-
     CharBuffer buffer = CharBuffer.allocate(8000);
-
-    //int position = 0;
-
-    //ReadView nextReadView;
-
-    //ReadView preReadView;
-
-    int pageIndex = 1;
-
-    boolean oneIsLayout, twoIsLayout;
+    boolean oneIsLayout;
 
     private Handler mHandler = new Handler() {
         @Override
@@ -72,14 +49,6 @@ public class MainActivity extends Activity implements OnClickListener, TouchList
                     final ReadView readView2 = (ReadView) view2.findViewById(R.id.textview);
 
                     buffer.position(0);
-//                    readView1.setText(buffer, new MyPage(1), new ReadView.LayoutListener() {
-//                        @Override
-//                        public void onLayout(int charNum) { //第一页的view加载完成, 可以获取到第二页的开始位置
-//
-//                            buffer.position(charNum);
-//                            readView2.setText(buffer, new MyPage(2));
-//                        }
-//                    });
 
                     //填充第一页的文本
                     readView1.setText(buffer);
@@ -98,6 +67,7 @@ public class MainActivity extends Activity implements OnClickListener, TouchList
                             MyPage page = new MyPage();
                             page.setPageSize(charNum);
                             page.setStartPosition(charNum);
+                            page.setId(1);
 
                             //将第一页的数据存储在数据库中，如果该数据不存在
                             if (isSavePage(1)) {
@@ -108,42 +78,37 @@ public class MainActivity extends Activity implements OnClickListener, TouchList
 
                             buffer.position(charNum);
                             readView2.setText(buffer);
+
                             oneIsLayout = true;
                         }
                     });
-
 
 
                     ViewTreeObserver vto2 = readView2.getViewTreeObserver();
                     vto2.addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
                         @Override
                         public void onGlobalLayout() {
-                            if (twoIsLayout)
-                                return;
-
                             int charNum = readView2.getCharNum();
+                            if (charNum == 0)
+                                return;
 
                             //将第二页的数据存储在数据库中, 如果该数据不存在
                             MyPage page = new MyPage();
                             page.setPageSize(charNum);
                             page.setStartPosition(charNum + getStartPosition(1));
+                            page.setId(2);
 
                             if (isSavePage(2)) {
                                 page.update(2);
                             } else {
                                 page.save();
                             }
-
-                            twoIsLayout = true;
                         }
                     });
-
-
                     break;
             }
         }
     };
-
 
 
     //该页是否存储
@@ -153,13 +118,15 @@ public class MainActivity extends Activity implements OnClickListener, TouchList
 
     //获取该页的结束位置
     private int getStartPosition(int pageNo) {
+        if (pageNo < 1) {
+            return 0;
+        }
+
         if (isSavePage(pageNo)) {
             return DataSupport.find(MyPage.class, pageNo).getStartPosition();
         }
         return 0;
     }
-
-
 
 
     @Override
@@ -176,14 +143,10 @@ public class MainActivity extends Activity implements OnClickListener, TouchList
     }
 
     @Override
-    public View createView(final int direction, View curView) {
-
+    public View createView(final int direction, final int index) {
         View newView;
         if (direction == TouchListener.MOVE_TO_LEFT) { //下一页
-
-            pageIndex ++;
-
-            buffer.position(getStartPosition(pageIndex));
+            buffer.position(getStartPosition(index));
 
             newView = LayoutInflater.from(this).inflate(R.layout.view_new, null);
             final ReadView readView = (ReadView) newView.findViewById(R.id.textview);
@@ -197,132 +160,69 @@ public class MainActivity extends Activity implements OnClickListener, TouchList
 
                     MyPage page = new MyPage();
                     page.setPageSize(charNm);
-                    page.setStartPosition(getStartPosition(pageIndex) + charNm);
-                    page.setBookId(pageIndex + 1);
 
-                    if (isSavePage(pageIndex + 1)) {
-                        page.update(pageIndex + 1);
+                    page.setStartPosition(getStartPosition(index) + charNm);
+                    page.setBookId(index + 1);
+                    page.setId(index + 1);
+
+                    if (isSavePage(index + 1)) {
+                        page.update(index + 1);
                     } else {
                         page.save();
                     }
                 }
             });
-        } else {  //上一页
-            pageIndex --;
-            buffer.position(getStartPosition(pageIndex-1));
-
+        } else {
+            buffer.position(getStartPosition(index-2));
             newView = LayoutInflater.from(this).inflate(R.layout.view_new, null);
-            ReadView readView = (ReadView) newView.findViewById(R.id.textview);
+            final ReadView readView = (ReadView) newView.findViewById(R.id.textview);
             readView.setText(buffer);
         }
-
-
-
-        Log.d("test0001", "page=" + pageIndex);
 
         return newView;
     }
 
     @Override
-    public boolean whetherHasPreviousPage() {
-        //return currentShowEndIndex > COUNT;
-        return true;
-    }
-
-    @Override
     public boolean whetherHasNextPage() {
-        //return currentShowEndIndex < textLength;
         return true;
-    }
-
-    @Override
-    public boolean currentIsFirstPage() {
-//		boolean should = currentTopEndIndex > COUNT;
-//		if (!should) {
-//			currentBottomEndIndex = currentShowEndIndex;
-//			currentShowEndIndex = currentTopEndIndex;
-//			currentTopEndIndex = currentTopEndIndex - COUNT;
-//		}
-
-        boolean should = true;
-
-        return should;
     }
 
     @Override
     public boolean currentIsLastPage() {
-//		boolean should = currentBottomEndIndex < textLength;
-//		if (!should) {
-//			currentTopEndIndex = currentShowEndIndex;
-//			final int nextIndex = currentBottomEndIndex + COUNT;
-//			currentShowEndIndex = currentBottomEndIndex;
-//			if (textLength > nextIndex) {
-//				currentBottomEndIndex = nextIndex;
-//			} else {
-//				currentBottomEndIndex = textLength;
-//			}
-//		}
-
-        boolean should = true;
-
-        return should;
+        return true;
     }
 
     private class ReadingThread extends Thread {
         public void run() {
-//			AssetManager am = getAssets();
-//
-//            InputStream inputStream = null;
-//            ByteArrayOutputStream outputStream = null;
-//
-//			try {
-//                inputStream = am.open("text.txt");
-//				if (inputStream != null) {
-//
-//                    outputStream = new ByteArrayOutputStream();
-//					int i;
-//					while ((i = inputStream.read()) != -1) {
-//                        outputStream.write(i);
-//					}
-//					text = new String(outputStream.toByteArray(), "UTF-8");
-//
-//					mHandler.obtainMessage(MSG_DRAW_TEXT).sendToTarget();
-//				}
-//			} catch (IOException e) {
-//				e.printStackTrace();
-//			} finally {
-//
-//                if (inputStream != null) {
-//                    try {
-//                        inputStream.close();
-//                    } catch (IOException e) {
-//                        e.printStackTrace();
-//                    }
-//                }
-//
-//                if (outputStream != null) {
-//                    try {
-//                        outputStream.close();
-//                    } catch (IOException e) {
-//                        e.printStackTrace();
-//                    }
-//                }
-//            }
-
-            BufferedReader reader;
+            BufferedReader reader = null;
+            InputStream in = null;
             AssetManager assets = getAssets();
             try {
-                InputStream in = assets.open("text.txt");
+                in = assets.open("text.txt");
+
                 Charset charset = CharsetDetector.detect(in);
                 reader = new BufferedReader(new InputStreamReader(in, charset));
-
                 reader.read(buffer);
 
                 mHandler.obtainMessage(MSG_DRAW_TEXT).sendToTarget();
             } catch (IOException e) {
                 e.printStackTrace();
+            } finally {
+                if (reader != null) {
+                    try {
+                        reader.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+                if (in != null) {
+                    try {
+                        in.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
             }
-
         }
     }
 

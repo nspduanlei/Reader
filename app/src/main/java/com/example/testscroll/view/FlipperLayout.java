@@ -2,6 +2,7 @@ package com.example.testscroll.view;
 
 import android.content.Context;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.VelocityTracker;
 import android.view.View;
@@ -10,6 +11,9 @@ import android.view.ViewGroup;
 import android.widget.Scroller;
 
 public class FlipperLayout extends ViewGroup {
+
+    private int index = 1;
+    private static final String TAG = "FlipperLayout";
 
     /**
      * 弹性滑动对象，实现过渡效果的滑动
@@ -170,16 +174,26 @@ public class FlipperLayout extends ViewGroup {
                 if (mDirection == MOVE_NO_RESULT) {
                     if (mListener.whetherHasNextPage() && distance > 0) { //左滑
                         mDirection = MOVE_TO_LEFT;
-                    } else if (mListener.whetherHasPreviousPage() && distance < 0) { //右滑
+//                    } else if (mListener.whetherHasPreviousPage() && distance < 0) { //右滑
+//                        mDirection = MOVE_TO_RIGHT;
+//                    }
+                    } else if (index > 1 && distance < 0) { //右滑
                         mDirection = MOVE_TO_RIGHT;
                     }
+
                 }
 
                 //是否停止滑动判断
                 //当暂停时如果没有上一页或者下一页时停止
+//                if (mMode == MODE_NONE
+//                        && ((mDirection == MOVE_TO_LEFT && mListener.whetherHasNextPage()) || (mDirection == MOVE_TO_RIGHT && mListener
+//                        .whetherHasPreviousPage()))) {
+//                    mMode = MODE_MOVE;
+//                }
+
                 if (mMode == MODE_NONE
-                        && ((mDirection == MOVE_TO_LEFT && mListener.whetherHasNextPage()) || (mDirection == MOVE_TO_RIGHT && mListener
-                        .whetherHasPreviousPage()))) {
+                        && ((mDirection == MOVE_TO_LEFT && mListener.whetherHasNextPage()) || (mDirection == MOVE_TO_RIGHT
+                        && index > 1))) {
                     mMode = MODE_MOVE;
                 }
 
@@ -214,7 +228,7 @@ public class FlipperLayout extends ViewGroup {
 
                         if (mDirection == MOVE_TO_LEFT && scrollX != 0 && mListener.whetherHasNextPage()) {
                             mScrollerView.scrollTo(0, 0);
-                        } else if (mDirection == MOVE_TO_RIGHT && mListener.whetherHasPreviousPage() && screenWidth != Math.abs(scrollX)) {
+                        } else if (mDirection == MOVE_TO_RIGHT && index > 1 && screenWidth != Math.abs(scrollX)) {
                             mScrollerView.scrollTo(-screenWidth, 0);
                         }
                     }
@@ -287,7 +301,11 @@ public class FlipperLayout extends ViewGroup {
             mScrollerView.scrollTo(mScroller.getCurrX(), mScroller.getCurrY());
             postInvalidate();
         } else if (mScroller.isFinished() && mListener != null && mTouchResult != MOVE_NO_RESULT) {
+
             if (mTouchResult == MOVE_TO_LEFT) { //下一页
+
+                index ++;
+
                 if (currentTopView != null) {
                     removeView(currentTopView);
                 }
@@ -295,7 +313,7 @@ public class FlipperLayout extends ViewGroup {
                 currentShowView = currentBottomView;
 
                 if (mListener.currentIsLastPage()) { //当前页不是最后一页
-                    final View newView = mListener.createView(mTouchResult, currentTopView);
+                    final View newView = mListener.createView(mTouchResult, index);
                     currentBottomView = newView;
                     addView(newView, 0);
                 } else {  //当前页是最后一页
@@ -304,24 +322,29 @@ public class FlipperLayout extends ViewGroup {
                     addView(currentBottomView, 0);
                 }
             } else { //上一页
+                if(index > 1)
+                    index --;
+
                 if (currentBottomView != null) {
                     removeView(currentBottomView);
                 }
                 currentBottomView = currentShowView;
                 currentShowView = mScrollerView;
 
-                if (mListener.currentIsFirstPage()) {
-                    currentTopView = mListener.createView(mTouchResult, currentBottomView);
-
-                    currentTopView.scrollTo(-screenWidth, 0);
-                    addView(currentTopView);
-                } else {
+                //if (mListener.currentIsFirstPage()) {
+                if (index == 1) {
                     currentTopView = new View(getContext());
                     currentTopView.scrollTo(-screenWidth, 0);
                     currentTopView.setVisibility(View.GONE);
                     addView(currentTopView);
+                } else {
+                    currentTopView = mListener.createView(mTouchResult, index);
+                    currentTopView.scrollTo(-screenWidth, 0);
+                    addView(currentTopView);
                 }
             }
+
+            Log.d(TAG, "index:" + index);
             mTouchResult = MOVE_NO_RESULT;
         }
     }
@@ -352,25 +375,17 @@ public class FlipperLayout extends ViewGroup {
          * 手指向左滑动，即查看下一章节
          */
         int MOVE_TO_LEFT = 0;
-        /**
-         * 手指向右滑动，即查看上一章节
-         */
-        int MOVE_TO_RIGHT = 1;
+
 
         /**
          * 创建一个承载Text的View
          *
-         * @param direction
+         * @param direction 滑动方向
+         * @param index 新建页的索引
          * @return
          */
-        View createView(final int direction, View view);
+        View createView(final int direction, int index);
 
-        /***
-         * 当前页是否是第一页
-         *
-         * @return
-         */
-        boolean currentIsFirstPage();
 
         /***
          * 当前页是否是最后一页
@@ -378,13 +393,6 @@ public class FlipperLayout extends ViewGroup {
          * @return
          */
         boolean currentIsLastPage();
-
-        /**
-         * 当前页是否有上一页（用来判断可滑动性）
-         *
-         * @return
-         */
-        boolean whetherHasPreviousPage();
 
         /***
          * 当前页是否有下一页（用来判断可滑动性）

@@ -68,4 +68,16 @@ public class MyPage extends DataSupport {
     public void setFileName(String fileName) {
         FileName = fileName;
     }
+
+    @Override
+    public String toString() {
+        return "MyPage{" +
+                "id=" + id +
+                ", bookId=" + bookId +
+                ", chapter=" + chapter +
+                ", startPosition=" + startPosition +
+                ", pageSize=" + pageSize +
+                ", FileName='" + FileName + '\'' +
+                '}';
+    }
 }
